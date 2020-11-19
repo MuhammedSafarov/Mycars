@@ -25,6 +25,7 @@ namespace Mycars
 {
     public class Startup
     {
+        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -37,8 +38,18 @@ namespace Mycars
 
         public void ConfigureServices(IServiceCollection services)
         {
+
             var key = AuthOptions.GetSymmetricSecurityKey();
-            services.AddDbContext<MycarsContext>(opt => opt.UseNpgsql("Host=192.168.56.1;Username=postgres;Password=mysecretpassword;Database=postgres;Trust Server Certificate=true;"));
+            services.AddDbContext<MycarsContext>(opt => opt.UseNpgsql("Host=192.168.56.1;Username=postgres;Password=secretpassword;Port=5449;Database=postgres;Trust Server Certificate=true;"));
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: MyAllowSpecificOrigins,
+                                builder =>
+                                {
+                                    builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                                });
+            });
 
             services.AddControllers().AddNewtonsoftJson(s => {
                 s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
@@ -49,7 +60,7 @@ namespace Mycars
             services.AddScoped<IMycarsRepo, SqlMycarsRepo>();
             services.AddHttpContextAccessor();
 
-            //ADDED AFTER TUTORIAL
+            
             services.AddSwaggerGen(c =>
             {
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -120,6 +131,7 @@ namespace Mycars
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
 
             });
+
 
             if (env.IsDevelopment())
             {
